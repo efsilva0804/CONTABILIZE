@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Users, 
   Receipt, 
@@ -69,10 +69,24 @@ export default function App() {
   );
 
   // State for MVP
-  const [employees, setEmployees] = useState<Employee[]>([
-    { id: '1', name: 'João da Silva', salaryBase: 2500, dependents: 1, useVT: true },
-    { id: '2', name: 'Maria Oliveira', salaryBase: 3200, dependents: 2, useVT: false },
-  ]);
+  const [employees, setEmployees] = useState<Employee[]>(() => {
+    const saved = localStorage.getItem('contabil_employees');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return [
+      { id: '1', name: 'João da Silva', salaryBase: 2500, dependents: 1, useVT: true },
+      { id: '2', name: 'Maria Oliveira', salaryBase: 3200, dependents: 2, useVT: false },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('contabil_employees', JSON.stringify(employees));
+  }, [employees]);
 
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean, employeeId: string, name: string } | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

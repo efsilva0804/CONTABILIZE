@@ -22,6 +22,7 @@ export interface PayrollResult {
   employeeId: string;
   name: string;
   baseSalary: number;
+  taxBaseCalc: number;
   inss: number;
   irpf: number;
   fgts: number;

@@ -439,10 +439,9 @@ export default function App() {
         doc.setFontSize(9);
         doc.setTextColor(...textDark);
         doc.setFont("helvetica", "bold");
-        const baseCalc = p.baseSalary + p.otherProventos; 
         doc.text(fmt(p.baseSalary), 13, currentY + 12);
-        doc.text(fmt(baseCalc), 60, currentY + 12);
-        doc.text(fmt(baseCalc), 110, currentY + 12);
+        doc.text(fmt(p.taxBaseCalc), 60, currentY + 12);
+        doc.text(fmt(p.taxBaseCalc), 110, currentY + 12);
         doc.text(fmt(p.fgts), 155, currentY + 12);
         
         doc.line(58, currentY + 4, 58, currentY + 14);
@@ -462,7 +461,7 @@ export default function App() {
         doc.setFontSize(9);
         doc.setTextColor(...textDark);
         doc.setFont("helvetica", "bold");
-        doc.text(fmt(baseCalc - p.inss - (p.dependents*189.59)), 13, currentY + 8); // Simplified IRRF base
+        doc.text(fmt(p.taxBaseCalc - p.inss - (p.dependents*189.59)), 13, currentY + 8); // Simplified IRRF base
         doc.text(p.irpf > 0 ? "Tributável" : "Isento", 60, currentY + 8);
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
@@ -498,7 +497,7 @@ export default function App() {
         doc.setFontSize(12);
         doc.setTextColor(...bgHeaderBlue);
         doc.setFont("helvetica", "bold");
-        doc.text("Comprovante de Encomenda e Recibo de Pagamento", 105, startY + 6.5, { align: "center" });
+        doc.text("Recibo de Pagamento de Salário", 105, startY + 6.5, { align: "center" });
         
         doc.rect(10, startY + 13, 190, 10);
         doc.setFontSize(7);

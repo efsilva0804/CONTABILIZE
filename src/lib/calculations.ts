@@ -168,25 +168,34 @@ export function calculatePayroll(salary: number, dependents: number, useVT: bool
   // Aggregate events
   let otherProventos = 0;
   let otherDescontos = 0;
+  let nonTaxableProventos = 0;
+
   events.forEach(ev => {
-    if (ev.type === 'provento') otherProventos += ev.value;
-    else if (ev.type === 'desconto') otherDescontos += ev.value;
+    if (ev.type === 'provento') {
+      otherProventos += ev.value;
+      if (ev.name.toLowerCase().includes('ajuda de custo')) {
+        nonTaxableProventos += ev.value;
+      }
+    } else if (ev.type === 'desconto') {
+      otherDescontos += ev.value;
+    }
   });
 
   // Simplified: proventos incidem sobre INSS/FGTS? Depende do provento, mas vamos usar uma modelagem básica
   // O correto seria algumas rubricas terem ou n incidência, 
   // aqui consideraremos para simplificar que hora extra/bonus incidem na base
   const salaryBaseCalc = salary + otherProventos; 
+  const taxBaseCalc = salary + otherProventos - nonTaxableProventos;
 
-  const inss = calculateINSS(salaryBaseCalc);
-  const irpf = calculateIRPF(salaryBaseCalc, inss, dependents);
-  const fgts = salaryBaseCalc * 0.08;
-  const familySalary = calculateFamilySalary(salaryBaseCalc, dependents);
+  const inss = calculateINSS(taxBaseCalc);
+  const irpf = calculateIRPF(taxBaseCalc, inss, dependents);
+  const fgts = taxBaseCalc * 0.08;
+  const familySalary = calculateFamilySalary(taxBaseCalc, dependents);
   const vtDeduction = useVT ? Math.min(salary * 0.06, 9999) : 0; // Simplified VT
 
   // Provisions (1/12 rule) based on base calculation
-  const thirteenth = salaryBaseCalc / 12;
-  const vacation = salaryBaseCalc / 12;
+  const thirteenth = taxBaseCalc / 12;
+  const vacation = taxBaseCalc / 12;
   const vacationBonus = vacation / 3;
   const taxesOnProvisions = (thirteenth + vacation + vacationBonus) * (0.08); // Only FGTS for SN Anexo III
 
@@ -195,6 +204,7 @@ export function calculatePayroll(salary: number, dependents: number, useVT: bool
 
   return {
     baseSalary: salary,
+    taxBaseCalc,
     inss,
     irpf,
     fgts,

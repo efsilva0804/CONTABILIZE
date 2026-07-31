@@ -27,7 +27,10 @@ import {
   ListPlus,
   MessageCircle,
   CheckSquare,
-  LogOut
+  LogOut,
+  Cloud,
+  Save,
+  DownloadCloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -55,6 +58,76 @@ export default function App() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  const [isDriveAuthed, setIsDriveAuthed] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingDrive, setIsLoadingDrive] = useState(false);
+
+  useEffect(() => {
+    // Check initial drive auth status
+    fetch('/api/oauth/google/status')
+      .then(res => res.json())
+      .then(data => setIsDriveAuthed(data.authenticated))
+      .catch(err => console.error("Error checking drive auth", err));
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'GOOGLE_OAUTH_SUCCESS') {
+        setIsDriveAuthed(true);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const handleDriveAuth = async () => {
+    try {
+      const res = await fetch('/api/oauth/google/auth');
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, 'Google OAuth', 'width=500,height=600');
+      }
+    } catch (err) {
+      console.error("Error initiating oauth", err);
+    }
+  };
+
+  const handleSaveToDrive = async () => {
+    setIsSaving(true);
+    try {
+      const res = await fetch('/api/drive/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(employees)
+      });
+      if (!res.ok) throw new Error("Save failed");
+      alert("Dados salvos no Google Drive com sucesso!");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao salvar no Drive.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLoadFromDrive = async () => {
+    setIsLoadingDrive(true);
+    try {
+      const res = await fetch('/api/drive/load');
+      if (!res.ok) throw new Error("Load failed");
+      const data = await res.json();
+      if (data.employees) {
+        setEmployees(data.employees);
+        alert("Dados carregados do Google Drive!");
+      } else {
+        alert("Nenhum dado encontrado no Google Drive.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao carregar do Drive.");
+    } finally {
+      setIsLoadingDrive(false);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<'dash' | 'employees' | 'fiscal' | 'reports' | 'settings'>('dash');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -1020,13 +1093,43 @@ export default function App() {
                       />
                       <Users className="absolute left-3.5 top-3 text-slate-400" size={18} />
                     </div>
-                    <button 
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="w-full sm:w-auto bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
-                    >
-                      <Plus size={18} />
-                      Novo Funcionário
-                    </button>
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                      {!isDriveAuthed ? (
+                        <button 
+                          onClick={handleDriveAuth}
+                          className="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
+                        >
+                          <Cloud size={18} />
+                          Conectar Drive
+                        </button>
+                      ) : (
+                        <>
+                          <button 
+                            onClick={handleLoadFromDrive}
+                            disabled={isLoadingDrive}
+                            className="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
+                          >
+                            <DownloadCloud size={18} />
+                            {isLoadingDrive ? 'Carregando...' : 'Carregar'}
+                          </button>
+                          <button 
+                            onClick={handleSaveToDrive}
+                            disabled={isSaving}
+                            className="flex-1 sm:flex-none bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
+                          >
+                            <Save size={18} />
+                            {isSaving ? 'Salvando...' : 'Salvar'}
+                          </button>
+                        </>
+                      )}
+                      <button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex-1 sm:flex-none bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
+                      >
+                        <Plus size={18} />
+                        Novo Funcionário
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">

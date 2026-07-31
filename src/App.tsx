@@ -26,7 +26,8 @@ import {
   ChevronLeft,
   ListPlus,
   MessageCircle,
-  CheckSquare
+  CheckSquare,
+  LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -50,6 +51,11 @@ const fmt = (val: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   const [activeTab, setActiveTab] = useState<'dash' | 'employees' | 'fiscal' | 'reports' | 'settings'>('dash');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
@@ -614,6 +620,69 @@ export default function App() {
     doc.save(`memoria_calculo_fiscal_${format(new Date(), 'MM_yyyy')}.pdf`);
   };
 
+  const handleLogin = (e: any) => {
+    e.preventDefault();
+    if (loginUsername === 'eniofds@gmail.com' && loginPassword === 'M@nu0412') {
+      setIsAuthenticated(true);
+      setLoginError('');
+    } else {
+      setLoginError('Usuário ou senha incorretos.');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen w-full bg-slate-50 items-center justify-center font-sans">
+        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+          <div className="flex justify-center mb-6">
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl">
+              C
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-center text-slate-800 mb-8">Login - ContábilJá</h2>
+          
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1 mb-2 block">Usuário</label>
+              <input 
+                type="text" 
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none font-medium text-slate-800 transition-all"
+                placeholder="Ex: eniofds@gmail.com"
+                autoComplete="username"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1 mb-2 block">Senha</label>
+              <input 
+                type="password" 
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 outline-none font-medium text-slate-800 transition-all"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
+
+            {loginError && (
+              <div className="text-red-500 text-sm font-medium text-center">
+                {loginError}
+              </div>
+            )}
+
+            <button 
+              type="submit"
+              className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full bg-slate-50 font-sans text-slate-800 overflow-hidden">
       
@@ -679,6 +748,16 @@ export default function App() {
             collapsed={isSidebarCollapsed}
           />
         </nav>
+
+        <div className="p-3">
+          <button 
+            onClick={() => setIsAuthenticated(false)}
+            className="flex items-center gap-3 w-full px-3 py-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
+          >
+            <LogOut size={20} className="group-hover:text-red-600 transition-colors" />
+            {!isSidebarCollapsed && <span className="font-medium text-sm">Sair do Sistema</span>}
+          </button>
+        </div>
 
         <div className="p-4 border-t border-slate-100 bg-white">
           <div className={cn(
